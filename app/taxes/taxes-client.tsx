@@ -1,5 +1,5 @@
 "use client"
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { DialogTrigger } from "@/components/ui/dialog"
 
 import type React from "react"
@@ -501,6 +501,7 @@ export function TaxesClient() {
   }
 
   const TaxForm = ({ tax, onSubmit }: { tax?: Tax; onSubmit: (formData: FormData) => void }) => {
+    const stationInputRef = useRef<HTMLInputElement | null>(null)
     const [searchResults, setSearchResults] = useState<Station[]>([])
     const [isSearching, setIsSearching] = useState(false)
 
@@ -765,7 +766,8 @@ export function TaxesClient() {
             <div className="relative">
               <Input
                 id="station_search"
-                value={stationSearchTerm}
+                ref={stationInputRef}
+                defaultValue={stationSearchTerm}
                 onChange={(e) => {
                   console.log("[v0] Station search input changed:", e.target.value)
                   setStationSearchTerm(e.target.value)
@@ -818,6 +820,7 @@ export function TaxesClient() {
                       onClick={() => {
                         setStationSearchTerm(station.station_name)
                         setSelectedStationId(station.id)
+                        if (stationInputRef.current) stationInputRef.current.value = station.station_name
                         setShowStationDropdown(false)
                       }}
                     >
