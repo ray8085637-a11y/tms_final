@@ -117,7 +117,7 @@ export function TaxesClient() {
   const [completedCurrentPage, setCompletedCurrentPage] = useState(1)
   const [sectionItemsPerPage] = useState(5) // 5 items per section
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const [isShowingResults, setIsShowingResults] = useState(false)
   const [displayedText, setDisplayedText] = useState("")
@@ -505,6 +505,7 @@ export function TaxesClient() {
     const [isSearching, setIsSearching] = useState(false)
 
     useEffect(() => {
+      const controller = new AbortController()
       const run = async () => {
         if (isComposing) return
         const term = debouncedSearchTerm.trim()
@@ -537,6 +538,7 @@ export function TaxesClient() {
       }
 
       run()
+      return () => controller.abort()
     }, [debouncedSearchTerm, isComposing, supabase])
     const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0]
