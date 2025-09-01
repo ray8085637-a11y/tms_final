@@ -326,7 +326,7 @@ export function NotificationsClient() {
     }
 
     return (
-      <Card className={`relative ${getVariantStyles()}`}>
+      <Card className={`relative border-0 ${getVariantStyles()}`}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="space-y-1 flex-1">
