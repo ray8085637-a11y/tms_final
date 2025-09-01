@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from "next"
+import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log("[v0] Email request data:", JSON.stringify(body))
 
-    const { to, subject, content } = body
+    const { to, subject, content, html, text } = body
 
     if (!to || !Array.isArray(to) || to.length === 0) {
       console.log("[v0] Invalid recipients")
@@ -57,14 +57,17 @@ export async function POST(request: NextRequest) {
           {
             type: "text/plain",
             value:
+              text ||
               content ||
               `TMS 시스템에서 보내는 테스트 이메일입니다.\n\n발송 시간: ${new Date().toLocaleString("ko-KR")}\n\n이 이메일을 받으셨다면 이메일 알림 시스템이 정상적으로 작동하고 있습니다.`,
           },
           {
             type: "text/html",
-            value: content
-              ? `<p>${content.replace(/\n/g, "<br>")}</p>`
-              : `
+            value: html
+              ? html
+              : content
+                ? `<p>${content.replace(/\n/g, "<br>")}</p>`
+                : `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2 style="color: #333;">TMS 테스트 이메일</h2>
                 <p>TMS 시스템에서 보내는 테스트 이메일입니다.</p>
