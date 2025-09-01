@@ -319,8 +319,15 @@ export function TaxesClient() {
     const taxType = formData.get("tax_type") as "acquisition" | "property" | "local" | "other"
     const defaultStatus = taxType === "acquisition" ? "accounting_review" : "payment_scheduled"
 
+    const stationIdFromForm = (formData.get("charging_station_id") as string) || ""
+    if (!stationIdFromForm) {
+      toast({ title: "충전소 선택 필요", description: "검색 결과에서 충전소를 선택해 주세요.", variant: "destructive" })
+      setIsLoading(false)
+      return
+    }
+
     const taxData = {
-      station_id: selectedStationId,
+      station_id: stationIdFromForm,
       tax_type: taxType,
       tax_amount: Number.parseFloat(formData.get("tax_amount") as string),
       due_date: formData.get("due_date") as string,
@@ -378,8 +385,15 @@ export function TaxesClient() {
 
     setIsLoading(true)
 
+    const stationIdFromForm = (formData.get("charging_station_id") as string) || ""
+    if (!stationIdFromForm) {
+      toast({ title: "충전소 선택 필요", description: "검색 결과에서 충전소를 선택해 주세요.", variant: "destructive" })
+      setIsLoading(false)
+      return
+    }
+
     const taxData = {
-      station_id: selectedStationId,
+      station_id: stationIdFromForm,
       tax_type: formData.get("tax_type") as "acquisition" | "property" | "local" | "other",
       tax_amount: Number.parseFloat(formData.get("tax_amount") as string),
       due_date: formData.get("due_date") as string,
