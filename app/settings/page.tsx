@@ -68,6 +68,15 @@ export default function SettingsPage() {
   const handleRoleChange = async () => {
     if (!user) return
 
+    // Admin 승격 시 비밀번호 확인
+    if (user.role !== "admin") {
+      const input = window.prompt("관리자로 변경하려면 비밀번호를 입력하세요")
+      if (input !== "221114") {
+        alert("비밀번호가 올바르지 않습니다.")
+        return
+      }
+    }
+
     setUpdating(true)
     try {
       const newRole = user.role === "viewer" ? "admin" : "viewer"
@@ -86,7 +95,6 @@ export default function SettingsPage() {
         console.log("[v0] Role changed successfully to:", newRole)
         setUser({ ...user, role: newRole })
         alert(`권한이 ${newRole === "admin" ? "관리자" : "뷰어"}로 변경되었습니다.`)
-        // Refresh the page to update navigation and permissions
         router.refresh()
       }
     } catch (error) {

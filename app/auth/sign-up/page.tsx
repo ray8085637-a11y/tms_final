@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+// removed role selection UI; role is fixed to 'viewer'
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -17,7 +17,7 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("")
   const [repeatPassword, setRepeatPassword] = useState("")
   const [name, setName] = useState("")
-  const [role, setRole] = useState<"viewer" | "admin">("viewer")
+  const [role] = useState<"viewer" | "admin">("viewer")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -80,7 +80,7 @@ export default function SignUpPage() {
           emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
           data: {
             name: name.trim(),
-            role: role,
+            role: "viewer",
           },
         },
       })
@@ -168,18 +168,7 @@ export default function SignUpPage() {
                       onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="role">권한</Label>
-                    <Select value={role} onValueChange={(value: "viewer" | "admin") => setRole(value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="권한을 선택하세요" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="viewer">뷰어 (조회만 가능)</SelectItem>
-                        <SelectItem value="admin">관리자 (모든 권한)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {/* 권한 선택 제거: 모든 신규 사용자는 뷰어로 생성 */}
                   <div className="grid gap-2">
                     <Label htmlFor="password">비밀번호</Label>
                     <Input
