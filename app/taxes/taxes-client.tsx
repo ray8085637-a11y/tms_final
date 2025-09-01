@@ -502,6 +502,11 @@ export function TaxesClient() {
 
   const TaxForm = ({ tax, onSubmit }: { tax?: Tax; onSubmit: (formData: FormData) => void }) => {
     const stationInputRef = useRef<HTMLInputElement | null>(null)
+    const [stationSearchTerm, setStationSearchTerm] = useState("")
+    const [selectedStationId, setSelectedStationId] = useState("")
+    const [showStationDropdown, setShowStationDropdown] = useState(false)
+    const [isComposing, setIsComposing] = useState(false)
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
     const [searchResults, setSearchResults] = useState<Station[]>([])
     const [isSearching, setIsSearching] = useState(false)
 
@@ -541,6 +546,24 @@ export function TaxesClient() {
       run()
       return () => controller.abort()
     }, [debouncedSearchTerm, isComposing, supabase])
+
+    // Debounce stationSearchTerm -> debouncedSearchTerm
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        if (!isComposing) setDebouncedSearchTerm(stationSearchTerm)
+      }, 300)
+      return () => clearTimeout(timer)
+    }, [stationSearchTerm, isComposing])
+
+    // Initialize form fields when editing or resetting
+    useEffect(() => {
+      if (tax) {
+        setSelectedStationId(tax.station_id || "")
+      } else {
+        setSelectedStationId("")
+        setStationSearchTerm("")
+      }
+    }, [tax])
     const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0]
       if (file) {
@@ -788,6 +811,7 @@ export function TaxesClient() {
                 }}
                 onFocus={() => {
                   console.log("[v0] Station search input focused")
+                  // Open dropdown only; do not change aria-hidden ancestors
                   if (!isComposing) setShowStationDropdown(true)
                 }}
                 onBlur={() => {
