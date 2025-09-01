@@ -1,0 +1,231 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  /* Monochrome theme using #212121 as base color */
+  --background: #1f1f1f; /* Updated to #1F1F1F for main content area */
+  --foreground: #ffffff; /* White for primary text */
+  --card: #1f1f1f; /* Updated to match main content background */
+  --card-foreground: #ffffff; /* White for text within cards */
+  --popover: #1f1f1f; /* Updated to match main content background */
+  --popover-foreground: #ffffff; /* Text color for popovers */
+  --primary: #ffb100; /* Bright orange-yellow for primary actions */
+  --primary-foreground: #000000; /* Black text on primary buttons */
+  --secondary: #212121; /* Dark gray for secondary elements */
+  --secondary-foreground: #ffffff; /* White text on secondary elements */
+  --muted: #212121; /* Dark gray for less important text */
+  --muted-foreground: #ffffff; /* White text for muted elements */
+  --accent: #ffb100; /* Bright orange-yellow for accents and highlights */
+  --accent-foreground: #000000; /* Black text on accent elements */
+  --destructive: #212121; /* Dark gray for destructive actions */
+  --destructive-foreground: #ffffff; /* White text on destructive elements */
+  --border: #333333; /* Slightly lighter gray for borders */
+  --input: #1f1f1f; /* Updated input field background to match main content */
+  --ring: #ffb100; /* Bright orange-yellow for focus rings */
+  --chart-1: #212121; /* Custom color for chart elements */
+  --chart-2: #2a2a2a; /* Slightly lighter variation */
+  --chart-3: #333333; /* Lighter variation */
+  --chart-4: #3a3a3a; /* Even lighter variation */
+  --chart-5: #424242; /* Lightest variation */
+  --radius: 0.5rem; /* Rounded corners for cards and buttons */
+  --sidebar: #0d0d0d; /* Dark gray background for sidebar */
+  --sidebar-foreground: #ffffff; /* Text color for sidebar */
+  --sidebar-primary: #ffb100; /* Bright orange-yellow background for primary sidebar items */
+  --sidebar-primary-foreground: #000000; /* Black text for primary sidebar items */
+  --sidebar-accent: #ffb100; /* Bright orange-yellow accent color for sidebar highlights */
+  --sidebar-accent-foreground: #000000; /* Black text for sidebar accent items */
+  --sidebar-border: #333333; /* Border color for sidebar */
+  --sidebar-ring: #ffb100; /* Bright orange-yellow focus ring color for sidebar items */
+}
+
+@theme inline {
+  /* Fixed font variable mapping to match layout.tsx definitions */
+  --font-sans: var(--font-montserrat);
+  --font-body: var(--font-open-sans);
+  /* Removed undefined --font-geist-mono reference */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    /* Changed from font-body to font-sans to use proper Tailwind class */
+    @apply bg-background text-foreground font-sans;
+    min-height: 100vh;
+  }
+
+  /* Adding h2 styling to match dashboard text-2xl font size */
+  h2 {
+    @apply text-2xl font-bold tracking-tight;
+  }
+
+  /* Google Fonts inspired dark theme styles */
+  .google-fonts-container {
+    @apply grid gap-6 p-6;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-auto-rows: minmax(240px, auto);
+  }
+
+  .google-fonts-card {
+    @apply bg-card border border-border rounded-lg p-6 hover:shadow-xl transition-all duration-300 cursor-pointer;
+  }
+
+  .google-fonts-card-large {
+    @apply col-span-2 row-span-2;
+  }
+
+  .google-fonts-card-wide {
+    @apply col-span-2;
+  }
+
+  .google-fonts-card-tall {
+    @apply row-span-2;
+  }
+
+  .google-fonts-sidebar {
+    @apply bg-sidebar border-r border-sidebar-border;
+  }
+
+  .google-fonts-nav-item {
+    /* Ensuring proper spacing between hover utilities */
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-200;
+  }
+
+  .google-fonts-nav-item.active {
+    @apply bg-primary text-primary-foreground;
+  }
+
+  .google-fonts-button {
+    /* Ensuring proper spacing between hover utilities */
+    @apply bg-primary text-primary-foreground hover:bg-accent hover:text-accent-foreground rounded-lg px-6 py-3 font-semibold transition-all duration-200 border border-border;
+  }
+
+  .google-fonts-button-secondary {
+    /* Ensuring proper spacing between hover utilities */
+    @apply bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground rounded-lg px-6 py-3 font-semibold transition-all duration-200 border border-border;
+  }
+
+  .google-fonts-input {
+    @apply bg-input border border-border rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent text-foreground;
+  }
+
+  .google-fonts-filter-item {
+    /* Ensuring proper spacing between hover utilities */
+    @apply flex items-center gap-2 px-3 py-2 rounded-lg text-sidebar-foreground hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer border border-transparent;
+  }
+
+  .google-fonts-filter-item.active {
+    @apply bg-primary text-primary-foreground border-border;
+  }
+
+  /* Icon navigation styles */
+  .icon-nav {
+    @apply flex flex-col items-center gap-4 p-4 bg-card border-r border-border;
+    width: 80px;
+  }
+
+  .icon-nav-item {
+    /* Ensuring proper spacing between hover utilities */
+    @apply flex flex-col items-center gap-1 p-3 rounded-lg text-muted-foreground hover:text-primary-foreground hover:bg-primary transition-all duration-200 cursor-pointer;
+  }
+
+  .icon-nav-item.active {
+    @apply text-primary-foreground bg-primary;
+  }
+
+  /* Section navigation styles */
+  .section-nav {
+    @apply bg-sidebar border-r border-sidebar-border p-4;
+    width: 280px;
+  }
+
+  .section-nav-header {
+    @apply flex items-center gap-2 mb-6;
+  }
+
+  .section-nav-item {
+    /* Ensuring proper spacing between hover utilities */
+    @apply block px-3 py-2 rounded-lg text-sidebar-foreground hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer mb-1;
+  }
+
+  .section-nav-item.active {
+    @apply bg-primary text-primary-foreground;
+  }
+
+  /* Main content area */
+  .main-content {
+    @apply flex-1 p-6 overflow-auto;
+  }
+
+  .content-header {
+    @apply flex items-center justify-between mb-8;
+  }
+
+  .content-title {
+    @apply text-3xl font-bold text-foreground;
+  }
+
+  .content-description {
+    @apply text-muted-foreground mt-2 max-w-3xl;
+  }
+
+  /* Card grid for content */
+  .content-grid {
+    @apply grid gap-6;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+
+  .content-card {
+    /* Ensuring proper spacing between hover utilities */
+    @apply bg-card border border-border rounded-lg p-6 hover:bg-gray-900 hover:shadow-lg transition-all duration-300 cursor-pointer;
+  }
+
+  .content-card-header {
+    @apply flex items-center justify-between mb-4;
+  }
+
+  .content-card-title {
+    @apply text-xl font-semibold text-card-foreground;
+  }
+
+  .content-card-description {
+    @apply text-muted-foreground;
+  }
+}
