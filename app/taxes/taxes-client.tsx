@@ -501,6 +501,43 @@ export function TaxesClient() {
   }
 
   const TaxForm = ({ tax, onSubmit }: { tax?: Tax; onSubmit: (formData: FormData) => void }) => {
+    const [searchResults, setSearchResults] = useState<Station[]>([])
+    const [isSearching, setIsSearching] = useState(false)
+
+    useEffect(() => {
+      const run = async () => {
+        if (isComposing) return
+        const term = debouncedSearchTerm.trim()
+        if (!term) {
+          setSearchResults([])
+          setShowStationDropdown(false)
+          return
+        }
+        try {
+          setIsSearching(true)
+          const wildcard = `%${term}%`
+          const { data, error } = await supabase
+            .from("charging_stations")
+            .select("id, station_name, address, location")
+            .or(`station_name.ilike.${wildcard},address.ilike.${wildcard},location.ilike.${wildcard}`)
+            .order("station_name")
+            .limit(20)
+
+          if (error) {
+            console.error("[v0] Station live search error:", error)
+            setSearchResults([])
+            setShowStationDropdown(false)
+          } else {
+            setSearchResults(data || [])
+            setShowStationDropdown(true)
+          }
+        } finally {
+          setIsSearching(false)
+        }
+      }
+
+      run()
+    }, [debouncedSearchTerm, isComposing, supabase])
     const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0]
       if (file) {
@@ -747,9 +784,7 @@ export function TaxesClient() {
                 }}
                 onFocus={() => {
                   console.log("[v0] Station search input focused")
-                  if (!isComposing && stationSearchTerm.trim()) {
-                    setShowStationDropdown(true)
-                  }
+                  if (!isComposing) setShowStationDropdown(true)
                 }}
                 onBlur={() => {
                   console.log("[v0] Station search input blurred")
@@ -770,35 +805,28 @@ export function TaxesClient() {
                   className="absolute z-10 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto"
                   onMouseDown={(e) => e.preventDefault()}
                 >
-                  {stations
-                    .filter(
-                      (station) =>
-                        station.station_name?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-                        (station.address &&
-                          station.address.toLowerCase().includes(debouncedSearchTerm.toLowerCase())) ||
-                        (station.location &&
-                          station.location.toLowerCase().includes(debouncedSearchTerm.toLowerCase())),
-                    )
-                    .map((station) => (
-                      <div
-                        key={station.id}
-                        className="px-3 py-2 hover:bg-accent cursor-pointer"
-                        onClick={() => {
-                          setStationSearchTerm(station.station_name)
-                          setSelectedStationId(station.id)
-                          setShowStationDropdown(false)
-                        }}
-                      >
-                        <div className="font-medium">{station.station_name}</div>
-                        <div className="text-sm text-muted-foreground">{station.address || station.location}</div>
-                      </div>
-                    ))}
-                  {stations.filter(
-                    (station) =>
-                      station.station_name?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-                      (station.address && station.address.toLowerCase().includes(debouncedSearchTerm.toLowerCase())) ||
-                      (station.location && station.location.toLowerCase().includes(debouncedSearchTerm.toLowerCase())),
-                  ).length === 0 && <div className="px-3 py-2 text-muted-foreground">검색 결과가 없습니다</div>}
+                  {isSearching && (
+                    <div className="px-3 py-2 text-muted-foreground">검색 중...</div>
+                  )}
+
+                  {!isSearching && searchResults.map((station) => (
+                    <div
+                      key={station.id}
+                      className="px-3 py-2 hover:bg-accent cursor-pointer"
+                      onClick={() => {
+                        setStationSearchTerm(station.station_name)
+                        setSelectedStationId(station.id)
+                        setShowStationDropdown(false)
+                      }}
+                    >
+                      <div className="font-medium">{station.station_name}</div>
+                      <div className="text-sm text-muted-foreground">{station.address || station.location}</div>
+                    </div>
+                  ))}
+
+                  {!isSearching && searchResults.length === 0 && (
+                    <div className="px-3 py-2 text-muted-foreground">검색 결과가 없습니다</div>
+                  )}
                 </div>
               )}
             </div>
