@@ -713,15 +713,17 @@ export function TaxesClient() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="charging_station_id">충전소 *</Label>
+            <Label htmlFor="station_search">충전소 *</Label>
             <div className="relative">
               <Input
+                id="station_search"
                 value={stationSearchTerm}
                 onChange={(e) => {
                   console.log("[v0] Station search input changed:", e.target.value)
                   setStationSearchTerm(e.target.value)
                   console.log("[v0] Station search term updated to:", e.target.value)
                 }}
+                autoComplete="off"
                 onCompositionStart={() => {
                   console.log("[v0] Korean text composition started")
                   setIsComposing(true)
@@ -755,7 +757,10 @@ export function TaxesClient() {
 
               {/* Search results dropdown */}
               {showStationDropdown && debouncedSearchTerm.trim() && !isComposing && (
-                <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto">
+                <div
+                  className="absolute z-10 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto"
+                  onMouseDown={(e) => e.preventDefault()}
+                >
                   {stations
                     .filter(
                       (station) =>
