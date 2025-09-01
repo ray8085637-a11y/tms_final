@@ -380,6 +380,20 @@ export function NotificationsClient() {
               발송일: {new Date(notification.sent_at).toLocaleString("ko-KR")}
             </div>
           )}
+
+          {/* Delete action for admins */}
+          {isAdmin && (
+            <div className="mt-3 flex justify-end">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => handleDeleteNotification(notification.id)}
+                disabled={isActionLoading}
+              >
+                삭제
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     )
