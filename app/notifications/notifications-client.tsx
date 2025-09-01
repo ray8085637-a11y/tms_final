@@ -506,6 +506,29 @@ export function NotificationsClient() {
     }
   }
 
+  const handleDeleteEmailRecipient = async (recipientId: string) => {
+    if (!isAdmin) return
+
+    const confirmed = window.confirm("해당 이메일 수신자를 삭제하시겠습니까?")
+    if (!confirmed) return
+
+    setIsActionLoading(true)
+    try {
+      const { error } = await supabase.from("email_recipients").update({ is_active: false }).eq("id", recipientId)
+
+      if (error) throw error
+
+      await fetchEmailRecipients()
+
+      toast({ title: "삭제 완료", description: "이메일 수신자가 삭제되었습니다." })
+    } catch (error) {
+      console.error("Error deleting email recipient:", error)
+      toast({ title: "오류", description: "이메일 수신자 삭제에 실패했습니다.", variant: "destructive" })
+    } finally {
+      setIsActionLoading(false)
+    }
+  }
+
   const handleSendNotification = async (notificationId: string) => {
     if (!isAdmin) return
 
@@ -1205,7 +1228,19 @@ export function NotificationsClient() {
             {emailRecipients.map((recipient) => (
               <Card key={recipient.id}>
                 <CardHeader>
-                  <CardTitle className="text-lg">{recipient.name || recipient.email}</CardTitle>
+                  <CardTitle className="text-lg flex items-center justify-between gap-2">
+                    <span>{recipient.name || recipient.email}</span>
+                    {isAdmin && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteEmailRecipient(recipient.id)}
+                        disabled={isActionLoading}
+                      >
+                        삭제
+                      </Button>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
