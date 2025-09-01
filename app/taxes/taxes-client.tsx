@@ -216,26 +216,35 @@ export function TaxesClient() {
         due_date: editingTax.due_date || "",
         description: editingTax.notes || "",
       })
-      // Set station search term and ID for editing
-      if (editingTax.station_id) {
-        const station = stations.find((s) => s.id === editingTax.station_id)
-        if (station) {
-          setStationSearchTerm(station.station_name)
-          setSelectedStationId(station.id)
-        }
-      }
     } else {
-      // Reset form for new tax
+      // Reset core form values for new tax (do not clear station search here to avoid input resets)
       setNewTax({
         tax_type: "",
         amount: 0,
         due_date: "",
         description: "",
       })
+    }
+  }, [editingTax])
+
+  // Update station name/id when editing an existing tax and stations are available
+  useEffect(() => {
+    if (editingTax?.station_id) {
+      const station = stations.find((s) => s.id === editingTax.station_id)
+      if (station) {
+        setStationSearchTerm(station.station_name)
+        setSelectedStationId(station.id)
+      }
+    }
+  }, [editingTax, stations])
+
+  // When opening the create dialog, clear station search fields only at that moment
+  useEffect(() => {
+    if (isCreateDialogOpen && !editingTax) {
       setStationSearchTerm("")
       setSelectedStationId("")
     }
-  }, [editingTax, stations])
+  }, [isCreateDialogOpen, editingTax])
 
   const isAdmin = userRole === "admin"
 
