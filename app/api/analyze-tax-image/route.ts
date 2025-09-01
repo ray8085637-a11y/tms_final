@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("[v0] Calling Grok AI for image analysis")
+    console.log("[v0] XAI key present:", Boolean(process.env.XAI_API_KEY))
 
     let result
     try {
@@ -76,8 +77,14 @@ JSON 외에는 어떤 텍스트도 포함하지 마세요.`,
           "You are an expert OCR text extraction system. You specialize in reading all text from images including Korean, English, and numbers. Extract every visible text accurately and organize it systematically. Return ONLY valid JSON format without any additional text, explanations, or markdown formatting.",
       })
       console.log("[v0] AI call completed successfully")
-    } catch (aiError) {
-      console.error("[v0] AI generation failed:", aiError)
+    } catch (aiError: any) {
+      // Log minimal diagnostics without leaking secrets
+      console.error("[v0] AI generation failed:")
+      try {
+        console.error("  message:", aiError?.message)
+        console.error("  status:", aiError?.status || aiError?.response?.status)
+        console.error("  code:", aiError?.code)
+      } catch {}
       return Response.json({
         success: true,
         data: {

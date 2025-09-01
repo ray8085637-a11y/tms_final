@@ -59,7 +59,16 @@ export async function POST(request: NextRequest) {
       data: object,
     })
   } catch (error) {
-    console.error("Station image analysis error:", error)
+    console.error("Station image analysis error:")
+    try {
+      // Log minimal diagnostics
+      // @ts-ignore
+      console.error("  message:", (error as any)?.message)
+      // @ts-ignore
+      console.error("  status:", (error as any)?.status || (error as any)?.response?.status)
+      // @ts-ignore
+      console.error("  code:", (error as any)?.code)
+    } catch {}
     return NextResponse.json(
       {
         success: false,
