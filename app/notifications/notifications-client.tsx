@@ -1152,7 +1152,7 @@ export function NotificationsClient() {
           </div>
 
           <Tabs defaultValue="all" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-1">
+            <TabsList className="hidden">
               <TabsTrigger value="all">모든 알림 ({filteredAndSortedNotifications.length})</TabsTrigger>
             </TabsList>
 
