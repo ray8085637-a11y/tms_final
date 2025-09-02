@@ -914,7 +914,6 @@ export function TaxesClient() {
               <SelectContent>
                 <SelectItem value="acquisition">취득세</SelectItem>
                 <SelectItem value="property">재산세</SelectItem>
-                <SelectItem value="local">지방세</SelectItem>
                 <SelectItem value="other">기타세</SelectItem>
               </SelectContent>
             </Select>
