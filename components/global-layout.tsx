@@ -206,6 +206,19 @@ export function GlobalLayout({ children }: GlobalLayoutProps) {
               </Link>
             )
           })}
+          {user?.role === "admin" && (
+            <Link
+              href="/audit-logs"
+              className={cn(
+                "block px-4 py-3 font-medium transition-colors text-base leading-8 tracking-normal h-auto rounded-xl",
+                pathname === "/audit-logs"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-foreground hover:bg-accent hover:text-accent-foreground",
+              )}
+            >
+              이력 관리
+            </Link>
+          )}
         </nav>
 
         <div className="p-4 border-t border-gray-800 bg-neutral-900">
