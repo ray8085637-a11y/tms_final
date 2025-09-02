@@ -62,13 +62,29 @@ export async function POST(req: NextRequest) {
       // Build message
       const msg = `세금 일정 알림\n대상 건수: ${taxes.length}건\n기한: ${dateStr}`
 
-      // Send emails
+      // Send emails directly via SendGrid to avoid internal routing issues
       if (emails.length > 0) {
-        await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/send-email`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ to: emails, subject: "세금 일정 알림", text: msg, html: msg.replace(/\n/g, "<br>") }),
-        })
+        const apiKey = process.env.SENDGRID_API_KEY
+        const fromEmail = process.env.SENDGRID_FROM_EMAIL
+        if (apiKey && fromEmail) {
+          await fetch("https://api.sendgrid.com/v3/mail/send", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              personalizations: [
+                { to: emails.map((email: string) => ({ email })), subject: "세금 일정 알림" },
+              ],
+              from: { email: fromEmail, name: "TMS 세금 관리 시스템" },
+              content: [
+                { type: "text/plain", value: msg },
+                { type: "text/html", value: msg.replace(/\n/g, "<br>") },
+              ],
+            }),
+          })
+        }
       }
 
       // Send teams
