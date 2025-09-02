@@ -405,13 +405,16 @@ export function NotificationsClient() {
   const handleCreateNotification = async (formData: FormData) => {
     setIsActionLoading(true)
 
+    const rawTaxId = (formData.get("tax_id") as string) || ""
+    const rawChannelId = (formData.get("teams_channel_id") as string) || ""
+
     const notificationData = {
-      tax_id: (formData.get("tax_id") as string) || null,
+      tax_id: rawTaxId && rawTaxId !== "none" ? rawTaxId : null,
       notification_type: "manual" as const,
       notification_date: formData.get("notification_date") as string,
       notification_time: formData.get("notification_time") as string,
       message: formData.get("message") as string,
-      teams_channel_id: (formData.get("teams_channel_id") as string) || null,
+      teams_channel_id: rawChannelId && rawChannelId !== "none" ? rawChannelId : null,
       created_by: userId,
     }
 
