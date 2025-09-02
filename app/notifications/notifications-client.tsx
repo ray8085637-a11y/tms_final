@@ -1208,11 +1208,37 @@ export function NotificationsClient() {
 
         <TabsContent value="channels" className="space-y-4">
           {isAdmin && (
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between">
               <Button onClick={() => setIsCreateChannelOpen(true)} className="gap-2">
                 <Plus className="h-4 w-4" />
                 Teams 채널 등록
               </Button>
+              {teamsChannels.length > 0 && (
+                <Button
+                  onClick={async () => {
+                    try {
+                      setIsActionLoading(true)
+                      const res = await fetch("/api/send-teams", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ channelIds: teamsChannels.map((c) => c.id), text: "TMS 테스트 메시지" }),
+                      })
+                      const json = await res.json()
+                      if (!res.ok || !json.success) throw new Error(json.error || "failed")
+                      toast({ title: "성공", description: `테스트 메시지 발송: ${json.sent}건, 실패: ${json.failed}` })
+                    } catch (e) {
+                      toast({ title: "오류", description: "테스트 메시지 발송 실패", variant: "destructive" })
+                    } finally {
+                      setIsActionLoading(false)
+                    }
+                  }}
+                  disabled={isActionLoading}
+                  variant="outline"
+                  className="gap-2 bg-transparent"
+                >
+                  {isActionLoading ? "발송 중..." : "테스트 메시지 발송"}
+                </Button>
+              )}
             </div>
           )}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
