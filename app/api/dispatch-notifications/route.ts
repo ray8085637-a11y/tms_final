@@ -35,11 +35,11 @@ export async function POST(req: NextRequest) {
     // Fetch recipients and teams channels
     const [{ data: recipients }, { data: channels }] = await Promise.all([
       supabase.from("email_recipients").select("email").eq("is_active", true),
-      supabase.from("teams_channels").select("webhook_url").eq("is_active", true),
+      supabase.from("teams_channels").select("id, webhook_url").eq("is_active", true),
     ])
 
     const emails = (recipients || []).map((r: any) => r.email)
-    const webhooks = (channels || []).map((c: any) => c.webhook_url)
+    const webhooksAll = (channels || []).map((c: any) => c.webhook_url)
 
     for (const sched of schedules as any[]) {
       // Find taxes due at target day
@@ -88,9 +88,9 @@ export async function POST(req: NextRequest) {
       }
 
       // Send teams
-      if (webhooks.length > 0) {
+      if (webhooksAll.length > 0) {
         await Promise.all(
-          webhooks.map((url: string) =>
+          webhooksAll.map((url: string) =>
             fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: msg }) }),
           ),
         )
@@ -99,7 +99,90 @@ export async function POST(req: NextRequest) {
       dispatched += taxes.length
     }
 
-    return NextResponse.json({ success: true, dispatched, now: nowStr })
+    // Manual notifications: send at configured date/time when due
+    const kst = new Intl.DateTimeFormat("ko-KR", {
+      timeZone: "Asia/Seoul",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    })
+      .formatToParts(new Date())
+      .reduce((acc: any, p) => ((acc[p.type] = p.value), acc), {})
+
+    const yyyy = kst.year
+    const mm = kst.month
+    const dd = kst.day
+    const hh = kst.hour
+    const min = kst.minute
+    const todayKst = `${yyyy}-${mm}-${dd}`
+    const nowHm = `${hh}:${min}`
+
+    const { data: pendingManuals } = await supabase
+      .from("notifications")
+      .select("id, message, notification_date, notification_time, teams_channel_id")
+      .eq("notification_type", "manual")
+      .eq("is_sent", false)
+      .eq("notification_date", todayKst)
+
+    let dispatchedManual = 0
+    if (pendingManuals && pendingManuals.length > 0) {
+      // Optional mapping for channel-specific sends
+      const idToWebhook = new Map<string, string>()
+      ;(channels || []).forEach((c: any) => idToWebhook.set(c.id, c.webhook_url))
+
+      for (const n of pendingManuals as any[]) {
+        if ((n.notification_time as string) > nowHm) continue
+
+        const msg = n.message as string
+
+        // Send emails
+        if (emails.length > 0) {
+          const apiKey = process.env.SENDGRID_API_KEY
+          const fromEmail = process.env.SENDGRID_FROM_EMAIL
+          if (apiKey && fromEmail) {
+            await fetch("https://api.sendgrid.com/v3/mail/send", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                personalizations: [{ to: emails.map((email: string) => ({ email })), subject: "수동 알림" }],
+                from: { email: fromEmail, name: "TMS 세금 관리 시스템" },
+                content: [
+                  { type: "text/plain", value: msg },
+                  { type: "text/html", value: msg.replace(/\n/g, "<br>") },
+                ],
+              }),
+            })
+          }
+        }
+
+        // Send teams to selected channel or all
+        const targetWebhook = n.teams_channel_id ? idToWebhook.get(n.teams_channel_id) : null
+        const targets = targetWebhook ? [targetWebhook] : webhooksAll
+        if (targets.length > 0) {
+          await Promise.all(
+            targets.map((url: string) =>
+              fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: msg }) }),
+            ),
+          )
+        }
+
+        // Mark as sent
+        await supabase
+          .from("notifications")
+          .update({ is_sent: true, sent_at: new Date().toISOString() })
+          .eq("id", n.id)
+
+        dispatchedManual++
+      }
+    }
+
+    return NextResponse.json({ success: true, dispatched, dispatchedManual, now: nowStr })
   } catch (e) {
     return NextResponse.json({ success: false, error: (e as Error).message || "Unknown" }, { status: 500 })
   }
