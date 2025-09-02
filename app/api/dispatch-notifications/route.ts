@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 
-export async function POST(_req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
+    // Optional protection for external schedulers (AWS/EventBridge, etc.)
+    const cronSecret = process.env.CRON_SECRET
+    if (cronSecret) {
+      const url = new URL(req.url)
+      const provided = req.headers.get("x-cron-key") || url.searchParams.get("key")
+      if (provided !== cronSecret) {
+        return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
+      }
+    }
+
     const supabase = createAdminClient()
 
     // Load active schedules
