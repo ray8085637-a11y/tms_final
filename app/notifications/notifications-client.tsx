@@ -1406,11 +1406,124 @@ export function NotificationsClient() {
         </TabsContent>
 
         <TabsContent value="schedules" className="space-y-4">
+          {isAdmin && (
+            <div className="flex items-center justify-between">
+              <Button
+                className="gap-2"
+                onClick={async () => {
+                  const name = prompt("스케줄 이름", "세금 마감 리마인더")
+                  if (!name) return
+                  const daysStr = prompt("며칠 전 알림(정수)", "3") || "3"
+                  const days = Number(daysStr)
+                  const time = prompt("알림 시간(HH:MM)", "09:00") || "09:00"
+                  setIsActionLoading(true)
+                  try {
+                    const { data, error } = await supabase
+                      .from("notification_schedules")
+                      .insert([{ schedule_name: name, days_before: days, notification_time: time, is_active: true }])
+                      .select()
+                    if (error) throw error
+                    if (data) setSchedules([...(schedules as any), ...(data as any)])
+                    toast({ title: "등록 완료", description: "스케줄이 등록되었습니다." })
+                  } catch (e) {
+                    toast({ title: "오류", description: "스케줄 등록 실패", variant: "destructive" })
+                  } finally {
+                    setIsActionLoading(false)
+                  }
+                }}
+                disabled={isActionLoading}
+              >
+                {isActionLoading ? "등록 중..." : "스케줄 등록"}
+              </Button>
+
+              <Button
+                variant="outline"
+                className="gap-2 bg-transparent"
+                onClick={async () => {
+                  try {
+                    setIsActionLoading(true)
+                    const res = await fetch("/api/dispatch-notifications", { method: "POST" })
+                    const json = await res.json()
+                    if (!res.ok || !json.success) throw new Error(json.error || "failed")
+                    toast({ title: "성공", description: `스케줄 기반 알림 발송 처리: ${json.dispatched}건` })
+                  } catch (e) {
+                    toast({ title: "오류", description: "스케줄 발송 처리 실패", variant: "destructive" })
+                  } finally {
+                    setIsActionLoading(false)
+                  }
+                }}
+                disabled={isActionLoading}
+              >
+                {isActionLoading ? "처리 중..." : "스케줄 즉시 실행"}
+              </Button>
+            </div>
+          )}
+
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {schedules.map((schedule) => (
               <Card key={schedule.id}>
                 <CardHeader>
-                  <CardTitle className="text-lg">{schedule.schedule_name}</CardTitle>
+                  <CardTitle className="text-lg flex items-center justify-between gap-2">
+                    <span>{schedule.schedule_name}</span>
+                    {isAdmin && (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={async () => {
+                            const name = prompt("스케줄 이름", schedule.schedule_name) || schedule.schedule_name
+                            const days = Number(prompt("며칠 전 알림(정수)", String(schedule.days_before)) || schedule.days_before)
+                            const time = prompt("알림 시간(HH:MM)", schedule.notification_time) || schedule.notification_time
+                            setIsActionLoading(true)
+                            try {
+                              const { error } = await supabase
+                                .from("notification_schedules")
+                                .update({ schedule_name: name, days_before: days, notification_time: time })
+                                .eq("id", schedule.id)
+                              if (error) throw error
+                              // refresh
+                              const { data } = await supabase
+                                .from("notification_schedules")
+                                .select("*")
+                                .eq("is_active", true)
+                                .order("schedule_name")
+                              if (data) setSchedules(data as any)
+                              toast({ title: "수정 완료", description: "스케줄이 수정되었습니다." })
+                            } catch (e) {
+                              toast({ title: "오류", description: "스케줄 수정 실패", variant: "destructive" })
+                            } finally {
+                              setIsActionLoading(false)
+                            }
+                          }}
+                        >
+                          수정
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={async () => {
+                            if (!confirm("해당 스케줄을 삭제하시겠습니까?")) return
+                            setIsActionLoading(true)
+                            try {
+                              const { error } = await supabase
+                                .from("notification_schedules")
+                                .update({ is_active: false })
+                                .eq("id", schedule.id)
+                              if (error) throw error
+                              setSchedules(schedules.filter((s) => s.id !== schedule.id))
+                              toast({ title: "삭제 완료", description: "스케줄이 삭제되었습니다." })
+                            } catch (e) {
+                              toast({ title: "오류", description: "스케줄 삭제 실패", variant: "destructive" })
+                            } finally {
+                              setIsActionLoading(false)
+                            }
+                          }}
+                        >
+                          삭제
+                        </Button>
+                      </div>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">

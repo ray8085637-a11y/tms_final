@@ -1,0 +1,81 @@
+import { NextRequest, NextResponse } from "next/server"
+import { createAdminClient } from "@/lib/supabase/admin"
+
+export async function POST(_req: NextRequest) {
+  try {
+    const supabase = createAdminClient()
+
+    // Load active schedules
+    const { data: schedules, error: schedErr } = await supabase
+      .from("notification_schedules")
+      .select("id, days_before, notification_time, is_active")
+      .eq("is_active", true)
+    if (schedErr) throw schedErr
+
+    if (!schedules || schedules.length === 0) {
+      return NextResponse.json({ success: true, dispatched: 0 })
+    }
+
+    // Determine current time window
+    const now = new Date()
+    const nowStr = now.toISOString()
+
+    let dispatched = 0
+
+    // Fetch recipients and teams channels
+    const [{ data: recipients }, { data: channels }] = await Promise.all([
+      supabase.from("email_recipients").select("email").eq("is_active", true),
+      supabase.from("teams_channels").select("webhook_url").eq("is_active", true),
+    ])
+
+    const emails = (recipients || []).map((r: any) => r.email)
+    const webhooks = (channels || []).map((c: any) => c.webhook_url)
+
+    for (const sched of schedules as any[]) {
+      // Find taxes due at target day
+      const targetDate = new Date(now)
+      // Using days_before
+      targetDate.setDate(now.getDate() + sched.days_before)
+      const y = targetDate.getFullYear()
+      const m = String(targetDate.getMonth() + 1).padStart(2, "0")
+      const d = String(targetDate.getDate()).padStart(2, "0")
+      const dateStr = `${y}-${m}-${d}`
+
+      const { data: taxes, error: taxErr } = await supabase
+        .from("taxes")
+        .select("id, tax_type, tax_amount, due_date, charging_stations(station_name)")
+        .eq("due_date", dateStr)
+      if (taxErr) throw taxErr
+
+      if (!taxes || taxes.length === 0) continue
+
+      // Build message
+      const msg = `세금 일정 알림\n대상 건수: ${taxes.length}건\n기한: ${dateStr}`
+
+      // Send emails
+      if (emails.length > 0) {
+        await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/send-email`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ to: emails, subject: "세금 일정 알림", text: msg, html: msg.replace(/\n/g, "<br>") }),
+        })
+      }
+
+      // Send teams
+      if (webhooks.length > 0) {
+        await Promise.all(
+          webhooks.map((url: string) =>
+            fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: msg }) }),
+          ),
+        )
+      }
+
+      dispatched += taxes.length
+    }
+
+    return NextResponse.json({ success: true, dispatched, now: nowStr })
+  } catch (e) {
+    return NextResponse.json({ success: false, error: (e as Error).message || "Unknown" }, { status: 500 })
+  }
+}
+
