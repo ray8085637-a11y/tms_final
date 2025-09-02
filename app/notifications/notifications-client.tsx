@@ -1205,6 +1205,14 @@ export function NotificationsClient() {
         </TabsContent>
 
         <TabsContent value="channels" className="space-y-4">
+          {isAdmin && (
+            <div className="flex justify-end">
+              <Button onClick={() => setIsCreateChannelOpen(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Teams 채널 등록
+              </Button>
+            </div>
+          )}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {teamsChannels.map((channel) => (
               <Card key={channel.id}>
