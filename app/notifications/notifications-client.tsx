@@ -1060,6 +1060,8 @@ export function NotificationsClient() {
     </form>
   )
 
+  // Teams 채널 등록 다이얼로그
+  
   const EmailRecipientForm = () => (
     <div className="space-y-4">
       <div>
@@ -1248,6 +1250,16 @@ export function NotificationsClient() {
             </Card>
           )}
         </TabsContent>
+
+        <Dialog open={isCreateChannelOpen} onOpenChange={setIsCreateChannelOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Teams 채널 등록</DialogTitle>
+              <DialogDescription>Incoming Webhook URL을 포함해 채널 정보를 입력하세요.</DialogDescription>
+            </DialogHeader>
+            <TeamsChannelForm onSubmit={handleCreateTeamsChannel} />
+          </DialogContent>
+        </Dialog>
 
         <TabsContent value="emails" className="space-y-4">
           {isAdmin && (

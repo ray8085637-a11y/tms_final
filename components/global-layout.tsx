@@ -76,6 +76,13 @@ export function GlobalLayout({ children }: GlobalLayoutProps) {
           }
           console.log("[v0] GlobalLayout: Setting user data from session:", userData)
           setUser(userData)
+          // Fetch DB role to reflect latest permissions
+          try {
+            const { data: profile } = await supabase.from("users").select("role, name").eq("id", session.user.id).single()
+            if (profile?.role) {
+              setUser((prev) => (prev ? { ...prev, role: profile.role, name: profile.name || prev.name } : prev))
+            }
+          } catch {}
         } else {
           console.log("[v0] GlobalLayout: No active session found")
           setUser(null)
@@ -95,6 +102,12 @@ export function GlobalLayout({ children }: GlobalLayoutProps) {
               }
               console.log("[v0] GlobalLayout: Auth state change - setting user:", userData)
               setUser(userData)
+              try {
+                const { data: profile } = await supabase.from("users").select("role, name").eq("id", session.user.id).single()
+                if (profile?.role) {
+                  setUser((prev) => (prev ? { ...prev, role: profile.role, name: profile.name || prev.name } : prev))
+                }
+              } catch {}
             } else {
               console.log("[v0] GlobalLayout: Auth state change - clearing user")
               setUser(null)
