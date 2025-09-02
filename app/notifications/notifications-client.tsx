@@ -486,6 +486,16 @@ export function NotificationsClient() {
       })
     } else {
       setTeamsChannels([...teamsChannels, data])
+      // audit log
+      logAudit({
+        menu: "channels",
+        action: "create",
+        actorId: userId,
+        actorName: actorName || "사용자",
+        description: `Teams 채널 등록: ${data.channel_name}`,
+        targetTable: "teams_channels",
+        targetId: data.id,
+      })
       setIsCreateChannelOpen(false)
       toast({
         title: "성공",
@@ -494,6 +504,34 @@ export function NotificationsClient() {
     }
 
     setIsActionLoading(false)
+  }
+
+  const handleDeleteTeamsChannel = async (channelId: string) => {
+    if (!isAdmin) return
+
+    if (!window.confirm("해당 Teams 채널을 삭제하시겠습니까?")) return
+
+    setIsActionLoading(true)
+    try {
+      const { error } = await supabase.from("teams_channels").update({ is_active: false }).eq("id", channelId)
+      if (error) throw error
+      setTeamsChannels(teamsChannels.filter((c) => c.id !== channelId))
+      // audit log
+      logAudit({
+        menu: "channels",
+        action: "delete",
+        actorId: userId,
+        actorName: actorName || "사용자",
+        description: `Teams 채널 삭제: ID ${channelId}`,
+        targetTable: "teams_channels",
+        targetId: channelId,
+      })
+      toast({ title: "삭제 완료", description: "Teams 채널이 삭제되었습니다." })
+    } catch (e) {
+      toast({ title: "오류", description: "Teams 채널 삭제에 실패했습니다.", variant: "destructive" })
+    } finally {
+      setIsActionLoading(false)
+    }
   }
 
   const handleCreateEmailRecipient = async () => {
@@ -1245,7 +1283,19 @@ export function NotificationsClient() {
             {teamsChannels.map((channel) => (
               <Card key={channel.id}>
                 <CardHeader>
-                  <CardTitle className="text-lg">{channel.channel_name}</CardTitle>
+                  <CardTitle className="text-lg flex items-center justify-between gap-2">
+                    <span>{channel.channel_name}</span>
+                    {isAdmin && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteTeamsChannel(channel.id)}
+                        disabled={isActionLoading}
+                      >
+                        삭제
+                      </Button>
+                    )}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
