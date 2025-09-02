@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { logAudit } from "@/lib/audit"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -102,6 +103,7 @@ export function NotificationsClient() {
   const [taxes, setTaxes] = useState<Tax[]>([])
   const [userRole, setUserRole] = useState<string>("viewer")
   const [userId, setUserId] = useState<string>("")
+  const [actorName, setActorName] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [filterType, setFilterType] = useState<string>("all")
@@ -128,11 +130,12 @@ export function NotificationsClient() {
           return
         }
 
-        const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single()
+        const { data: profile } = await supabase.from("users").select("role, name, email").eq("id", user.id).single()
 
         if (profile) {
           setUserRole(profile.role)
           setUserId(user.id)
+          setActorName(profile.name || profile.email || "")
         }
 
         const { data: notificationsData } = await supabase
@@ -442,6 +445,16 @@ export function NotificationsClient() {
       })
     } else {
       setNotifications([data, ...notifications])
+      // audit log: create notification
+      logAudit({
+        menu: "notifications",
+        action: "create",
+        actorId: userId,
+        actorName: actorName || "사용자",
+        description: `알림 생성: ${data.message?.slice(0, 50)}`,
+        targetTable: "notifications",
+        targetId: data.id,
+      })
       setIsCreateNotificationOpen(false)
       toast({
         title: "성공",
@@ -688,6 +701,16 @@ export function NotificationsClient() {
       })
     } else {
       setNotifications(notifications.filter((n) => n.id !== notificationId))
+      // audit log: delete notification
+      logAudit({
+        menu: "notifications",
+        action: "delete",
+        actorId: userId,
+        actorName: actorName || "사용자",
+        description: `알림 삭제: ID ${notificationId}`,
+        targetTable: "notifications",
+        targetId: notificationId,
+      })
       toast({
         title: "성공",
         description: "알림이 성공적으로 삭제되었습니다.",

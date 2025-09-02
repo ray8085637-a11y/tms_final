@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState, useMemo, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { logAudit } from "@/lib/audit"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -58,6 +59,7 @@ const statusColors = {
 export function StationsClient() {
   const [stations, setStations] = useState<Station[]>([])
   const [userRole, setUserRole] = useState<string>("")
+  const [actorName, setActorName] = useState<string>("")
   const [userId, setUserId] = useState<string>("")
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -79,10 +81,11 @@ export function StationsClient() {
 
         setUserId(user.id)
 
-        const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single()
+        const { data: profile } = await supabase.from("users").select("role, name, email").eq("id", user.id).single()
 
         if (profile) {
           setUserRole(profile.role)
+          setActorName(profile.name || profile.email || "")
         }
 
         const { data: stationsData } = await supabase
@@ -193,6 +196,16 @@ export function StationsClient() {
       })
     } else {
       setStations([data, ...stations])
+      // audit log: create station
+      logAudit({
+        menu: "stations",
+        action: "create",
+        actorId: userId,
+        actorName: actorName || "사용자",
+        description: `충전소 등록: ${data.station_name}`,
+        targetTable: "charging_stations",
+        targetId: data.id,
+      })
       setIsCreateDialogOpen(false)
       toast({
         title: "성공",
@@ -231,6 +244,16 @@ export function StationsClient() {
       })
     } else {
       setStations(stations.map((s) => (s.id === editingStation.id ? data : s)))
+      // audit log: update station
+      logAudit({
+        menu: "stations",
+        action: "update",
+        actorId: userId,
+        actorName: actorName || "사용자",
+        description: `충전소 수정: ${data.station_name}`,
+        targetTable: "charging_stations",
+        targetId: data.id,
+      })
       setEditingStation(null)
       toast({
         title: "성공",
@@ -282,6 +305,16 @@ export function StationsClient() {
       })
     } else {
       setStations(stations.filter((s) => s.id !== stationId))
+      // audit log: delete station
+      logAudit({
+        menu: "stations",
+        action: "delete",
+        actorId: userId,
+        actorName: actorName || "사용자",
+        description: `충전소 삭제: ID ${stationId}`,
+        targetTable: "charging_stations",
+        targetId: stationId,
+      })
       toast({
         title: "성공",
         description: "충전소가 성공적으로 삭제되었습니다.",
