@@ -5,6 +5,7 @@ import { DialogTrigger } from "@/components/ui/dialog"
 import type React from "react"
 
 import { createClient } from "@/lib/supabase/client"
+import { logAudit } from "@/lib/audit"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -104,6 +105,7 @@ export function TaxesClient() {
   const [taxes, setTaxes] = useState<Tax[]>([])
   const [stations, setStations] = useState<Station[]>([])
   const [userRole, setUserRole] = useState<string>("viewer")
+  const [actorName, setActorName] = useState<string>("")
   const [userId, setUserId] = useState<string>("")
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -168,6 +170,7 @@ export function TaxesClient() {
 
         const { data: profile } = await supabase.from("users").select("*").eq("id", userData.user.id).single()
         setUserRole(profile?.role || "viewer")
+        setActorName(profile?.name || userData.user.email || "")
 
         const { data: taxesData, error: taxesError } = await supabase
           .from("taxes")
@@ -370,6 +373,15 @@ export function TaxesClient() {
     } else {
       console.log("[v0] Tax registration successful")
       setTaxes([data, ...taxes])
+      logAudit({
+        menu: "taxes",
+        action: "create",
+        actorId: userId,
+        actorName: actorName || "사용자",
+        description: `세금 등록: 금액 ${data.tax_amount}원, 기한 ${data.due_date}`,
+        targetTable: "taxes",
+        targetId: data.id,
+      })
       setIsCreateDialogOpen(false)
       toast({
         title: "성공",
@@ -428,6 +440,15 @@ export function TaxesClient() {
       })
     } else {
       setTaxes(taxes.map((t) => (t.id === editingTax.id ? data : t)))
+      logAudit({
+        menu: "taxes",
+        action: "update",
+        actorId: userId,
+        actorName: actorName || "사용자",
+        description: `세금 수정: ID ${data.id}`,
+        targetTable: "taxes",
+        targetId: data.id,
+      })
       setEditingTax(null)
       toast({
         title: "성공",
@@ -505,6 +526,15 @@ export function TaxesClient() {
       })
     } else {
       setTaxes(taxes.filter((t) => t.id !== taxId))
+      logAudit({
+        menu: "taxes",
+        action: "delete",
+        actorId: userId,
+        actorName: actorName || "사용자",
+        description: `세금 삭제: ID ${taxId}`,
+        targetTable: "taxes",
+        targetId: taxId,
+      })
       toast({
         title: "성공",
         description: "세금이 성공적으로 삭제되었습니다.",
