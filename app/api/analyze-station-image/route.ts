@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { xai } from "@ai-sdk/xai"
+import { google } from "@ai-sdk/google"
 import { generateObject } from "ai"
 import { z } from "zod"
 
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const mimeType = image.type
 
     const { object } = await generateObject({
-      model: xai("grok-2-vision-1212"),
+      model: google("gemini-1.5-flash"),
       messages: [
         {
           role: "user",

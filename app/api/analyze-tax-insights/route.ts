@@ -1,5 +1,5 @@
 import { generateText } from "ai"
-import { xai } from "@ai-sdk/xai"
+import { google } from "@ai-sdk/google"
 import type { NextRequest } from "next/server"
 
 export async function POST(request: NextRequest) {
@@ -13,15 +13,15 @@ export async function POST(request: NextRequest) {
       return new Response("Tax data is required", { status: 400 })
     }
 
-    if (!process.env.XAI_API_KEY) {
-      console.error("[v0] AI Analysis: XAI_API_KEY not found")
+    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+      console.error("[v0] AI Analysis: GOOGLE_GENERATIVE_AI_API_KEY not found")
       return new Response("AI service not configured", { status: 500 })
     }
 
-    console.log("[v0] AI Analysis: Calling Grok AI")
+    console.log("[v0] AI Analysis: Calling Gemini")
 
     const result = await generateText({
-      model: xai("grok-4"),
+      model: google("gemini-1.5-pro"),
       prompt: `세금 데이터: 총 ${taxData.totalTaxes}개, 미납 ${taxData.unpaidTaxes}개, 연체 ${taxData.overdueTaxes}개, 이번달 ${taxData.monthlyDue}개, 이번주 ${taxData.weeklyDue}개
 
 현재 세금 현황 요약

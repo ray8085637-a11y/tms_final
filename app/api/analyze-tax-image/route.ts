@@ -1,5 +1,5 @@
 import { generateText } from "ai"
-import { xai } from "@ai-sdk/xai"
+import { google } from "@ai-sdk/google"
 import type { NextRequest } from "next/server"
 import { Buffer } from "buffer"
 
@@ -32,13 +32,13 @@ export async function POST(request: NextRequest) {
       return Response.json({ success: false, error: "잘못된 요청 형식입니다." }, { status: 400 })
     }
 
-    console.log("[v0] Calling Grok AI for image analysis")
-    console.log("[v0] XAI key present:", Boolean(process.env.XAI_API_KEY))
+    console.log("[v0] Calling Gemini for image analysis")
+    console.log("[v0] GOOGLE_GENERATIVE_AI_API_KEY present:", Boolean(process.env.GOOGLE_GENERATIVE_AI_API_KEY))
 
     let result
     try {
       result = await generateText({
-        model: xai("grok-2-vision-1212"),
+        model: google("gemini-1.5-flash"),
         messages: [
           {
             role: "user",
