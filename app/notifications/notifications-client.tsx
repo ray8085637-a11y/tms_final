@@ -606,45 +606,7 @@ export function NotificationsClient() {
     if (!notification) return
 
     try {
-      // Send email notifications
-      if (emailRecipients.length > 0) {
-        const emailAddresses = emailRecipients.map((r) => r.email)
-        const emailResponse = await fetch("/api/send-email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            to: emailAddresses,
-            subject: "TMS 세금 알림",
-            html: `
-              <h2>TMS 세금 알림</h2>
-              <p>${notification.message}</p>
-              ${
-                notification.taxes
-                  ? `
-                <hr>
-                <h3>관련 세금 정보</h3>
-                <p><strong>충전소:</strong> ${notification.taxes.charging_stations.station_name}</p>
-                <p><strong>세금 유형:</strong> ${taxTypeLabels[notification.taxes.tax_type as keyof typeof taxTypeLabels]}</p>
-                <p><strong>세금 금액:</strong> ${notification.taxes.tax_amount.toLocaleString()}원</p>
-                <p><strong>납부 기한:</strong> ${new Date(notification.taxes.due_date).toLocaleDateString("ko-KR")}</p>
-              `
-                  : ""
-              }
-              <hr>
-              <p><small>이 메시지는 TMS 시스템에서 자동으로 발송되었습니다.</small></p>
-            `,
-            text: notification.message,
-          }),
-        })
-
-        if (!emailResponse.ok) {
-          console.error("Email send failed:", await emailResponse.text())
-        }
-      }
-
-      // Send Teams notification (existing code)
+      // Send Teams notification
       if (notification.teams_channel_id) {
         const channel = teamsChannels.find((c) => c.id === notification.teams_channel_id)
         if (channel) {

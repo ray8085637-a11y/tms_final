@@ -62,30 +62,7 @@ export async function POST(req: NextRequest) {
       // Build message
       const msg = `세금 일정 알림\n대상 건수: ${taxes.length}건\n기한: ${dateStr}`
 
-      // Send emails directly via SendGrid to avoid internal routing issues
-      if (emails.length > 0) {
-        const apiKey = process.env.SENDGRID_API_KEY
-        const fromEmail = process.env.SENDGRID_FROM_EMAIL
-        if (apiKey && fromEmail) {
-          await fetch("https://api.sendgrid.com/v3/mail/send", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${apiKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              personalizations: [
-                { to: emails.map((email: string) => ({ email })), subject: "세금 일정 알림" },
-              ],
-              from: { email: fromEmail, name: "TMS 세금 관리 시스템" },
-              content: [
-                { type: "text/plain", value: msg },
-                { type: "text/html", value: msg.replace(/\n/g, "<br>") },
-              ],
-            }),
-          })
-        }
-      }
+      // Email 전송 제거(Teams만 발송)
 
       // Send teams
       if (webhooksAll.length > 0) {
@@ -138,28 +115,7 @@ export async function POST(req: NextRequest) {
 
         const msg = n.message as string
 
-        // Send emails
-        if (emails.length > 0) {
-          const apiKey = process.env.SENDGRID_API_KEY
-          const fromEmail = process.env.SENDGRID_FROM_EMAIL
-          if (apiKey && fromEmail) {
-            await fetch("https://api.sendgrid.com/v3/mail/send", {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                personalizations: [{ to: emails.map((email: string) => ({ email })), subject: "수동 알림" }],
-                from: { email: fromEmail, name: "TMS 세금 관리 시스템" },
-                content: [
-                  { type: "text/plain", value: msg },
-                  { type: "text/html", value: msg.replace(/\n/g, "<br>") },
-                ],
-              }),
-            })
-          }
-        }
+        // Email 전송 제거(Teams만 발송)
 
         // Send teams to selected channel or all
         const targetWebhook = n.teams_channel_id ? idToWebhook.get(n.teams_channel_id) : null
