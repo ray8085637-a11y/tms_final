@@ -53,9 +53,15 @@ function getKstTodayAndNowHm() {
   return { today, nowHm }
 }
 
-export async function POST(_req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     const supabase = createAdminClient()
+    let body: any = null
+    try {
+      body = await req.json()
+    } catch {}
+    const taxIdFilter: string | undefined = typeof body?.taxId === "string" && body.taxId.trim().length > 0 ? body.taxId : undefined
+    const shouldPrune: boolean = body?.prune === true
 
     const { data: schedules, error: schedErr } = await supabase
       .from("notification_schedules")
@@ -68,11 +74,15 @@ export async function POST(_req: NextRequest) {
       return NextResponse.json({ success: true, created: 0, skipped: 0, reason: "no_active_schedules" })
     }
 
-    const { data: taxes, error: taxErr } = await supabase
+    let taxQuery = supabase
       .from("taxes")
       .select("id, tax_type, tax_amount, due_date, status, charging_stations(station_name)")
       .not("due_date", "is", null)
       .neq("status", "payment_completed")
+    if (taxIdFilter) {
+      taxQuery = taxQuery.eq("id", taxIdFilter)
+    }
+    const { data: taxes, error: taxErr } = await taxQuery
 
     if (taxErr) throw taxErr
 
@@ -84,6 +94,29 @@ export async function POST(_req: NextRequest) {
 
     let created = 0
     let skipped = 0
+
+    // Optional prune of past unsent auto reminders for a specific tax
+    if (shouldPrune && taxIdFilter) {
+      const { today, nowHm } = getKstTodayAndNowHm()
+      const { data: existing, error: loadErr } = await supabase
+        .from("notifications")
+        .select("id, notification_date, notification_time, is_sent")
+        .eq("notification_type", "auto")
+        .eq("tax_id", taxIdFilter)
+        .eq("is_sent", false)
+      if (loadErr) throw loadErr
+      const toDeleteIds: string[] = []
+      for (const n of existing || []) {
+        const dateStr = (n as any).notification_date as string
+        const timeStr = (n as any).notification_time as string
+        const isFuture = dateStr > today || (dateStr === today && timeStr > nowHm)
+        if (!isFuture) toDeleteIds.push((n as any).id)
+      }
+      if (toDeleteIds.length > 0) {
+        const { error: delErr } = await supabase.from("notifications").delete().in("id", toDeleteIds)
+        if (delErr) throw delErr
+      }
+    }
 
     for (const schedule of schedules as ScheduleRow[]) {
       for (const tax of taxes as TaxRow[]) {

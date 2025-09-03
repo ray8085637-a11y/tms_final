@@ -373,6 +373,13 @@ export function TaxesClient() {
     } else {
       console.log("[v0] Tax registration successful")
       setTaxes([data, ...taxes])
+      try {
+        await fetch("/api/generate-tax-reminders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ taxId: data.id, prune: true }),
+        })
+      } catch {}
       logAudit({
         menu: "taxes",
         action: "create",
