@@ -1149,7 +1149,7 @@ export function NotificationsClient() {
         <TabsList>
           <TabsTrigger value="notifications">알림 목록</TabsTrigger>
           <TabsTrigger value="channels">Teams 채널</TabsTrigger>
-          <TabsTrigger value="emails">이메일 수신자</TabsTrigger>
+          {/* 이메일 수신자 탭 숨김 */}
           <TabsTrigger value="schedules">알림 스케줄</TabsTrigger>
         </TabsList>
 
@@ -1302,73 +1302,7 @@ export function NotificationsClient() {
           </DialogContent>
         </Dialog>
 
-        <TabsContent value="emails" className="space-y-4">
-          {isAdmin && (
-            <div className="flex justify-between items-center">
-              <Button onClick={() => setIsCreateEmailRecipientOpen(true)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                이메일 수신자 생성
-              </Button>
-              {emailRecipients.length > 0 && (
-                <Button
-                  onClick={handleSendTestEmail}
-                  disabled={isActionLoading}
-                  variant="outline"
-                  className="gap-2 bg-transparent"
-                >
-                  {isActionLoading ? "발송 중..." : "테스트 이메일 발송"}
-                </Button>
-              )}
-            </div>
-          )}
-
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {emailRecipients.map((recipient) => (
-              <Card key={recipient.id}>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center justify-between gap-2">
-                    <span>{recipient.name || recipient.email}</span>
-                    {isAdmin && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteEmailRecipient(recipient.id)}
-                        disabled={isActionLoading}
-                      >
-                        삭제
-                      </Button>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="text-sm">
-                      <span className="text-muted-foreground">이메일: </span>
-                      <span className="font-medium">{recipient.email}</span>
-                    </div>
-                    <div className="text-sm">
-                      <span className="text-muted-foreground">상태: </span>
-                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                        활성화
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {emailRecipients.length === 0 && (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <h3 className="text-lg font-semibold mb-2">등록된 이메일 수신자가 없습니다</h3>
-                <p className="text-muted-foreground text-center">
-                  {isAdmin ? "이메일 수신자를 등록해보세요" : "관리자가 이메일 수신자를 설정할 때까지 기다려주세요"}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+        {/* 이메일 수신자 탭 콘텐츠 숨김 */}
 
         <TabsContent value="schedules" className="space-y-4">
           {isAdmin && (
