@@ -1,0 +1,25 @@
+name: Staging - Dispatch Notifications
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.STAGING_URL != '' }}
+    steps:
+      - name: Invoke staging dispatcher
+        env:
+          STAGING_URL: ${{ secrets.STAGING_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -e
+          if [ -z "$STAGING_URL" ]; then
+            echo "STAGING_URL secret not set" >&2
+            exit 1
+          fi
+          echo "Calling: $STAGING_URL/api/dispatch-notifications"
+          curl -sS -X POST "$STAGING_URL/api/dispatch-notifications?key=$CRON_SECRET" -H "Content-Type: application/json" | cat
+
